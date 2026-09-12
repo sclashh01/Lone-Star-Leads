@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lone Star Leads — Roofing Request</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE7D8;
+    --paper-dim:#E3DCC9;
+    --ink:#211E1A;
+    --ink-soft:#57534A;
+    --steel:#4A5A63;
+    --steel-soft:#8C99A0;
+    --rust:#B0491F;
+    --rust-dark:#8C3A18;
+    --wheat:#C9A227;
+    --line:#D2CAB4;
+    --danger:#A23B2E;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:560px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .brand-name{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:19px;
+    letter-spacing:0.01em;
+    color:var(--ink);
+  }
+  .brand-name span{color:var(--rust);}
+  .brand-tag{
+    font-size:12px;
+    color:var(--steel);
+  }
+
+  /* Roofline progress */
+  .roofline{
+    display:flex;
+    align-items:flex-end;
+    gap:3px;
+    height:34px;
+    margin-bottom:6px;
+  }
+  .roofline .pitch{
+    flex:1;
+    height:100%;
+    position:relative;
+    overflow:hidden;
+  }
+  .roofline .pitch svg{width:100%;height:100%;display:block;}
+  .roofline .pitch polygon{fill:var(--line);transition:fill .35s ease;}
+  .roofline .pitch.done polygon{fill:var(--rust);}
+  .roofline .pitch.active polygon{fill:var(--steel);}
+  .step-label{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:30px;
+  }
+
+  h1.step-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:26px;
+    line-height:1.25;
+    margin:0 0 8px;
+  }
+  p.step-sub{
+    color:var(--ink-soft);
+    font-size:14.5px;
+    margin:0 0 26px;
+    max-width:46ch;
+  }
+
+  .field{margin-bottom:20px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .field .hint{
+    font-size:12px;
+    color:var(--steel);
+    margin-top:5px;
+  }
+  input[type=text], input[type=tel], input[type=email], textarea, select{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:#fff;
+    color:var(--ink);
+  }
+  textarea{resize:vertical;min-height:84px;}
+  input:focus, textarea:focus, select:focus{
+    outline:2px solid var(--steel);
+    outline-offset:1px;
+    border-color:var(--steel);
+  }
+  input.error, textarea.error{border-color:var(--danger);}
+  .error-msg{
+    font-size:12.5px;
+    color:var(--danger);
+    margin-top:5px;
+    display:none;
+  }
+  .error-msg.show{display:block;}
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px 13px;
+    background:#fff;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .opt:hover{border-color:var(--steel-soft);}
+  .opt input{margin:0;accent-color:var(--rust);width:17px;height:17px;flex-shrink:0;}
+  .opt.selected{border-color:var(--rust);background:#FAF3EC;}
+  .opt-label{font-size:15px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+  .nav-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:32px;
+    gap:12px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    font-weight:600;
+    padding:13px 22px;
+    border-radius:var(--radius);
+    border:1px solid transparent;
+    cursor:pointer;
+  }
+  .btn-primary{
+    background:var(--rust);
+    color:#fff;
+    flex:1;
+  }
+  .btn-primary:hover{background:var(--rust-dark);}
+  .btn-primary:disabled{background:#C9AF9E;cursor:not-allowed;}
+  .btn-ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+  }
+  .btn-ghost:hover{border-color:var(--steel-soft);}
+
+  .consent-box{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    background:#fff;
+    margin-bottom:16px;
+  }
+  .consent-check{
+    display:flex;
+    gap:11px;
+    align-items:flex-start;
+    cursor:pointer;
+  }
+  .consent-check input{margin-top:3px;accent-color:var(--rust);width:17px;height:17px;flex-shrink:0;}
+  .consent-check p{margin:0;font-size:13.5px;color:var(--ink);}
+  .confirm-line{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .warn-box{
+    border-left:3px solid var(--rust);
+    background:var(--paper-dim);
+    padding:14px 16px;
+    margin-bottom:22px;
+    font-size:13.5px;
+  }
+  .warn-box strong{display:block;font-size:14px;margin-bottom:5px;}
+
+  /* Confirmation screen */
+  .confirm-wrap{text-align:left;}
+  .confirm-mark{
+    width:46px;height:46px;
+    border-radius:50%;
+    background:var(--wheat);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:18px;
+  }
+  .confirm-mark svg{width:22px;height:22px;}
+
+  /* Internal preview panel */
+  .internal{
+    margin-top:64px;
+    border-top:2px dashed var(--steel-soft);
+    padding-top:20px;
+  }
+  .internal-toggle{
+    background:none;
+    border:1px solid var(--steel-soft);
+    color:var(--steel);
+    font-size:12.5px;
+    padding:8px 14px;
+  }
+  .internal-panel{
+    display:none;
+    margin-top:16px;
+    font-size:13px;
+  }
+  .internal-panel.open{display:block;}
+  .internal-panel h3{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    text-transform:none;
+    letter-spacing:0.02em;
+    color:var(--steel);
+    margin:0 0 10px;
+    font-weight:600;
+  }
+  .ping-row, .score-row{
+    display:flex;
+    justify-content:space-between;
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .score-total{
+    display:flex;
+    justify-content:space-between;
+    padding-top:12px;
+    margin-top:6px;
+    font-weight:600;
+    font-size:15px;
+  }
+  .tag{
+    display:inline-block;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    font-weight:600;
+  }
+  .tag.verified{background:#E7EEDD;color:#4B6B2E;}
+  .tag.review{background:#F3E4C9;color:#8A5A17;}
+  .tag.pii-hidden{background:#EDE0E0;color:var(--danger);}
+  .tag.pass{background:#E7EEDD;color:#4B6B2E;}
+  .tag.fail{background:#F1DCD8;color:var(--danger);}
+
+  .verify-item{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px 13px;
+    background:#fff;
+    margin-bottom:9px;
+  }
+  .verify-item .vhead{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .verify-item .vfield{font-size:13.5px;font-weight:600;}
+  .verify-item .vreason{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+
+  @media (max-width:400px){
+    .grid3{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="brand-name">Lone Star <span>Leads</span></div>
+    <div class="brand-tag">Austin, TX</div>
+  </div>
+
+  <div class="roofline" id="roofline"></div>
+  <div class="step-label" id="stepLabel">Step 1 of 6 — Property ownership</div>
+
+  <form id="leadForm">
+
+    <!-- STEP 1: Ownership -->
+    <div class="step" data-step="1">
+      <h1 class="step-title">Need roofing help in Austin?</h1>
+      <p class="step-sub">Tell us about your roofing needs and we'll help connect you with a qualified roofing contractor serving your area. There is no cost to homeowners to submit this request.</p>
+
+      <div class="field">
+        <label>Are you the owner of the property?</label>
+        <div class="options" data-group="owner">
+          <label class="opt"><input type="radio" name="owner" value="yes"><span class="opt-label">Yes</span></label>
+          <label class="opt"><input type="radio" name="owner" value="no"><span class="opt-label">No</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Address -->
+    <div class="step" data-step="2" style="display:none;">
+      <h1 class="step-title">Where's the property?</h1>
+      <p class="step-sub">We use this to confirm you're in our Austin-area service zone.</p>
+
+      <div class="field">
+        <label for="street">Street address</label>
+        <input type="text" id="street" name="street" autocomplete="address-line1" placeholder="e.g. 733 Yarsa Blvd">
+        <div class="error-msg" data-err="street">Enter the full street address, including house number, street name, AND street type (e.g. "733 Yarsa Blvd" — not just "733 Yarsa").</div>
+      </div>
+      <div class="field">
+        <label for="unit">Unit / Apt / Suite number</label>
+        <input type="text" id="unit" name="unit" autocomplete="address-line2">
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;font-size:13px;color:var(--ink-soft);">
+          <input type="checkbox" id="noUnit" checked style="accent-color:var(--rust);width:15px;height:15px;">
+          This property doesn't have a unit or apartment number
+        </label>
+        <div class="error-msg" data-err="unit">Enter the unit/apt number, or check the box above if this property doesn't have one.</div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="city">City</label>
+          <input type="text" id="city" name="city" autocomplete="address-level2">
+          <div class="error-msg" data-err="city">Enter the city.</div>
+        </div>
+        <div class="field">
+          <label for="zip">ZIP code</label>
+          <input type="text" id="zip" name="zip" inputmode="numeric" maxlength="5" autocomplete="postal-code">
+          <div class="error-msg" data-err="zip">Enter a valid 5-digit ZIP.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>State</label>
+        <input type="text" value="Texas" disabled style="background:var(--paper-dim);color:var(--ink-soft);">
+      </div>
+      <div id="areaStop" style="display:none;">
+        <div class="warn-box">
+          <strong>Outside our service area</strong>
+          Sorry, this property is currently outside our service area. We currently serve Austin and surrounding areas within about 30 miles.
+        </div>
+      </div>
+      <div id="addressNotFound" style="display:none;">
+        <div class="warn-box">
+          <strong>We couldn't find this address</strong>
+          We weren't able to confirm this address exists. Please double-check the house number, street name, and ZIP code.
+        </div>
+      </div>
+      <div id="zipMismatch" style="display:none;">
+        <div class="warn-box">
+          <strong>ZIP code doesn't match this address</strong>
+          <span class="zip-mismatch-detail">The ZIP code you entered doesn't match our records for this address.</span> Please correct it before continuing.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Roofing need -->
+    <div class="step" data-step="3" style="display:none;">
+      <h1 class="step-title">What's going on with the roof?</h1>
+      <p class="step-sub">A few details help the contractor come prepared.</p>
+
+      <div class="field">
+        <label>What do you believe your roof needs?</label>
+        <div class="options" data-group="need">
+          <label class="opt"><input type="radio" name="need" value="replacement"><span class="opt-label">Complete roof replacement</span></label>
+          <label class="opt"><input type="radio" name="need" value="storm"><span class="opt-label">Hail / storm damage</span></label>
+          <label class="opt"><input type="radio" name="need" value="repair"><span class="opt-label">Roof repair</span></label>
+          <label class="opt"><input type="radio" name="need" value="unsure"><span class="opt-label">I'm not sure</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Approximately how large is the property?</label>
+        <select name="size" id="size">
+          <option value="">Select one</option>
+          <option value="lt1000">Less than 1,000 sq. ft.</option>
+          <option value="1000-1500">1,000–1,500 sq. ft.</option>
+          <option value="1501-2000">1,501–2,000 sq. ft.</option>
+          <option value="2001-2500">2,001–2,500 sq. ft.</option>
+          <option value="2501-3000">2,501–3,000 sq. ft.</option>
+          <option value="gt3000">More than 3,000 sq. ft.</option>
+          <option value="unknown">I don't know</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="desc">Please briefly describe the problem</label>
+        <textarea id="desc" name="desc" placeholder="Example: We noticed water coming through the ceiling after the last storm."></textarea>
+      </div>
+    </div>
+
+    <!-- STEP 4: Timing & Payment -->
+    <div class="step" data-step="4" style="display:none;">
+      <h1 class="step-title">Timing and payment</h1>
+      <p class="step-sub">This helps the contractor understand how to prioritize your request.</p>
+
+      <div class="field">
+        <label>How soon are you looking to have the work done?</label>
+        <div class="options" data-group="urgency">
+          <label class="opt"><input type="radio" name="urgency" value="immediately"><span class="opt-label">Immediately</span></label>
+          <label class="opt"><input type="radio" name="urgency" value="thisweek"><span class="opt-label">This week</span></label>
+          <label class="opt"><input type="radio" name="urgency" value="1-2weeks"><span class="opt-label">Within 1–2 weeks</span></label>
+          <label class="opt"><input type="radio" name="urgency" value="2plusweeks"><span class="opt-label">More than 2 weeks</span></label>
+          <label class="opt"><input type="radio" name="urgency" value="researching"><span class="opt-label">Just researching</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>How do you plan to pay for the work?</label>
+        <div class="options" data-group="payment">
+          <label class="opt"><input type="radio" name="payment" value="insurance"><span class="opt-label">Insurance</span></label>
+          <label class="opt"><input type="radio" name="payment" value="cashfinancing"><span class="opt-label">Cash or financing</span></label>
+          <label class="opt"><input type="radio" name="payment" value="unsure"><span class="opt-label">Not sure</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Contact -->
+    <div class="step" data-step="5" style="display:none;">
+      <h1 class="step-title">How can the contractor reach you?</h1>
+      <p class="step-sub">Your information is only shared after we verify your request.</p>
+
+      <div class="field">
+        <label for="fullname">Full name</label>
+        <input type="text" id="fullname" name="fullname" autocomplete="name">
+        <div class="error-msg" data-err="fullname">Enter your full name.</div>
+      </div>
+      <div class="field">
+        <label for="phone">Phone number</label>
+        <input type="tel" id="phone" name="phone" placeholder="(512) 555-0134" autocomplete="tel" maxlength="14" inputmode="numeric">
+        <div class="error-msg" data-err="phone">Enter a valid 10-digit phone number.</div>
+      </div>
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email">
+        <div class="error-msg" data-err="email">Enter a valid email address.</div>
+      </div>
+    </div>
+
+    <!-- STEP 6: Consent -->
+    <div class="step" data-step="6" style="display:none;">
+      <h1 class="step-title">Review and submit</h1>
+      <p class="step-sub">Last step — please read before submitting.</p>
+
+      <div class="consent-box">
+        <label class="consent-check">
+          <input type="checkbox" id="consentCheck">
+          <p>I agree that Lone Star Leads will share the information I provide with one (1) qualified roofing contractor selected to assist with my roofing request. I understand that the contractor may contact me by phone, text message (including autodialed or prerecorded messages), or email regarding my roofing needs. I am not obligated to purchase any services. Msg &amp; data rates may apply. Consent is not a condition of purchase.</p>
+        </label>
+        <p class="confirm-line">By submitting this form, I confirm that I am the property owner and that the information provided is accurate to the best of my knowledge.</p>
+      </div>
+      <div class="error-msg" data-err="consent" style="margin-bottom:16px;">We need your consent before we can connect you with a roofing contractor.</div>
+
+      <div class="warn-box">
+        <strong>Before you submit</strong>
+        A roofing contractor may contact you after you submit this request. By submitting your information, you are requesting assistance with your roofing needs and authorizing Lone Star Leads to share your information with a qualified roofing contractor who may contact you regarding your request.
+      </div>
+    </div>
+
+  </form>
+
+  <div class="nav-row" id="navRow">
+    <button type="button" class="btn-ghost" id="backBtn">Back</button>
+    <button type="button" class="btn-primary" id="nextBtn">Continue</button>
+  </div>
+
+  <!-- CONFIRMATION -->
+  <div class="confirm-wrap" id="confirmScreen" style="display:none;">
+    <div class="confirm-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="#3F5A22" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1 class="step-title" id="confirmName">Thank you.</h1>
+    <p class="step-sub" style="max-width:none;">
+      We received your roofing request. Your information has been reviewed and we are working to connect you with a qualified roofing contractor serving your area.<br><br>
+      A roofing contractor may contact you by phone, text message, or email within the next 24 business hours. Please keep your phone available so the contractor can reach you.
+    </p>
+  </div>
+
+  <!-- STOPPED: not the property owner -->
+  <div class="confirm-wrap" id="stopScreen" style="display:none;">
+    <div class="confirm-mark" style="background:var(--danger);">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </div>
+    <h1 class="step-title">We can't process this request.</h1>
+    <p class="step-sub" style="max-width:none;">
+      Sorry, we can only accept roofing requests submitted by the property owner. If you're not the property owner, please ask them to submit this request directly.
+    </p>
+    <div class="nav-row" style="justify-content:flex-start;">
+      <button type="button" class="btn-ghost" id="startOverBtn">Start over</button>
+    </div>
+  </div>
+
+  <!-- INTERNAL PREVIEW (for Sergio, not shown to homeowners in production) -->
+  <div class="internal">
+    <button type="button" class="internal-toggle" id="internalToggle">Show internal preview (Sergio only — hide in production)</button>
+    <div class="internal-panel" id="internalPanel">
+      <h3>Verification checks (Sergio only)</h3>
+      <div id="verifyRows"></div>
+
+      <h3 style="margin-top:22px;">What the 3 candidate contractors see (the "ping" — no PII)</h3>
+      <div id="pingRows"></div>
+
+      <h3 style="margin-top:22px;">Lead score (internal only)</h3>
+      <div id="scoreRows"></div>
+      <div class="score-total"><span>Total</span><span id="scoreTotal">—</span></div>
+      <div style="margin-top:10px;"><span class="tag pii-hidden" id="scoreTag">Awaiting submission</span></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--steel);" id="emailNotifyNote"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/*
+  FUNCTIONAL DEMO NOTES:
+  - Address service-area check below uses a static list of Austin-metro ZIP prefixes
+    as a stand-in. In production, replace checkServiceArea() with a real call to
+    Google Address Validation API + distance calc from an Austin origin point.
+  - Phone/email checks below are FORMAT validation only (regex). In production,
+    replace validatePhoneFormat()/validateEmailFormat() results with real
+    Twilio Lookup (phone) and a mailbox/MX verification service (email) calls,
+    made server-side after submission, before a lead is marked VERIFIED.
+  - SMS confirmation to the homeowner requires A2P 10DLC registration in the US;
+    this demo shows the on-screen confirmation only.
+*/
+
+const AUSTIN_METRO_ZIPS = new Set([
+  '78610','78613','78617','78641','78652','78653','78660','78664','78681',
+  '78701','78702','78703','78704','78705','78712','78717','78719','78721',
+  '78722','78723','78724','78725','78726','78727','78728','78729','78730',
+  '78731','78732','78733','78734','78735','78736','78737','78738','78739',
+  '78741','78742','78744','78745','78746','78747','78748','78749','78750',
+  '78751','78752','78753','78754','78756','78757','78758','78759'
+]);
+
+// DEMO-ONLY: lets the standalone file simulate a real "wrong ZIP for this
+// street" catch — the same thing live Google validation would do — without
+// needing a deployed backend. Test with: 733 Yarsa Blvd + a ZIP other than
+// 78748 (e.g. 78746) to see it caught.
+const MOCK_KNOWN_ADDRESSES = {
+  '733 yarsa blvd': '78748',
+  '210 rainy st': '78701',
+  '1450 cameron rd': '78723'
+};
+
+const STREET_SUFFIXES = [
+  'st','street','ave','avenue','blvd','boulevard','dr','drive','ct','court',
+  'ln','lane','rd','road','way','cir','circle','pl','place','trl','trail',
+  'pkwy','parkway','loop','path','ter','terrace','sq','square','hwy','highway',
+  'run','pass','cv','cove','xing','crossing','walk','row','pt','point'
+];
+
+function isValidStreetFormat(street){
+  const s = (street||'').trim();
+  const hasNumber = /^\d+/.test(s);
+  const rest = s.replace(/^\d+\s*/,'').trim();
+  if(!hasNumber || rest.length <= 2) return false;
+  const words = rest.toLowerCase().replace(/[.,]/g,'').split(/\s+/);
+  const hasSuffix = words.some(w => STREET_SUFFIXES.includes(w));
+  return hasSuffix;
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const noUnit = document.getElementById('noUnit');
+  const unitField = document.getElementById('unit');
+  if(noUnit && unitField){
+    noUnit.addEventListener('change', ()=>{
+      unitField.disabled = noUnit.checked;
+      if(noUnit.checked) unitField.value = '';
+    });
+  }
+
+  const phoneField = document.getElementById('phone');
+  if(phoneField){
+    phoneField.addEventListener('input', (e)=>{
+      const digits = e.target.value.replace(/\D/g,'').slice(0,10);
+      let formatted = digits;
+      if(digits.length > 6) formatted = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+      else if(digits.length > 3) formatted = `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+      else if(digits.length > 0) formatted = `(${digits}`;
+      e.target.value = formatted;
+    });
+    phoneField.addEventListener('keypress', (e)=>{
+      const currentDigits = e.target.value.replace(/\D/g,'').length;
+      if(!/\d/.test(e.key) || currentDigits >= 10){
+        e.preventDefault();
+      }
+    });
+  }
+
+  document.querySelectorAll('input[name="owner"]').forEach(radio=>{
+    radio.addEventListener('change', ()=>{
+      if(radio.value === 'no' && radio.checked){
+        showStopScreen();
+      }
+    });
+  });
+
+  const startOverBtn = document.getElementById('startOverBtn');
+  if(startOverBtn){
+    startOverBtn.addEventListener('click', ()=> location.reload());
+  }
+});
+
+const state = {
+  step: 1,
+  totalSteps: 6,
+  data: {}
+};
+
+const stepLabels = [
+  'Property ownership','Property address','Roofing need','Timing & payment','Contact info','Review & consent'
+];
+
+function buildRoofline(){
+  const el = document.getElementById('roofline');
+  el.innerHTML = '';
+  for(let i=1;i<=state.totalSteps;i++){
+    const div = document.createElement('div');
+    div.className = 'pitch';
+    if(i < state.step) div.classList.add('done');
+    else if(i === state.step) div.classList.add('active');
+    div.innerHTML = '<svg viewBox="0 0 40 34" preserveAspectRatio="none"><polygon points="0,34 20,0 40,34"/></svg>';
+    el.appendChild(div);
+  }
+}
+
+function renderStepChrome(){
+  buildRoofline();
+  document.getElementById('stepLabel').textContent = `Step ${state.step} of ${state.totalSteps} — ${stepLabels[state.step-1]}`;
+  document.querySelectorAll('.step').forEach(s=>{
+    s.style.display = (parseInt(s.dataset.step) === state.step) ? 'block' : 'none';
+  });
+  document.getElementById('backBtn').style.visibility = state.step === 1 ? 'hidden' : 'visible';
+  document.getElementById('nextBtn').textContent = state.step === state.totalSteps ? 'Submit My Roofing Request' : 'Continue';
+}
+
+function showError(key, show){
+  const el = document.querySelector(`.error-msg[data-err="${key}"]`);
+  if(el) el.classList.toggle('show', show);
+}
+
+function clearAllErrors(){
+  document.querySelectorAll('.error-msg').forEach(e=>e.classList.remove('show'));
+}
+
+function validateStep(){
+  clearAllErrors();
+  let ok = true;
+
+  if(state.step === 1){
+    const owner = document.querySelector('input[name="owner"]:checked');
+    if(!owner){ ok = false; }
+    else if(owner.value === 'no'){
+      showStopScreen();
+      ok = false;
+    }
+  }
+
+  if(state.step === 2){
+    const street = document.getElementById('street').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const zip = document.getElementById('zip').value.trim();
+    const unit = document.getElementById('unit').value.trim();
+    const noUnitChecked = document.getElementById('noUnit').checked;
+
+    if(!isValidStreetFormat(street)){ showError('street', true); ok = false; }
+    if(!city){ showError('city', true); ok = false; }
+    if(!noUnitChecked && !unit){ showError('unit', true); ok = false; }
+    if(!/^\d{5}$/.test(zip)){ showError('zip', true); ok = false; }
+  }
+
+  if(state.step === 5){
+    const fullname = document.getElementById('fullname').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phoneDigits = phone.replace(/\D/g,'');
+    const emailErrEl = document.querySelector('.error-msg[data-err="email"]');
+
+    if(!fullname){ showError('fullname', true); ok = false; }
+    if(phoneDigits.length !== 10){ showError('phone', true); ok = false; }
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      emailErrEl.textContent = 'Enter a valid email address.';
+      showError('email', true);
+      ok = false;
+    } else {
+      const suggestion = checkEmailTypo(email);
+      if(suggestion){
+        emailErrEl.textContent = `This looks misspelled — did you mean "${email.split('@')[0]}@${suggestion}"?`;
+        showError('email', true);
+        ok = false;
+      }
+    }
+  }
+
+  if(state.step === 6){
+    if(!document.getElementById('consentCheck').checked){
+      showError('consent', true);
+      ok = false;
+    }
+  }
+
+  return ok;
+}
+
+function collectData(){
+  const f = document.getElementById('leadForm');
+  const fd = new FormData(f);
+  const data = {};
+  for(const [k,v] of fd.entries()) data[k] = v;
+  data.street = document.getElementById('street').value.trim();
+  data.city = document.getElementById('city').value.trim();
+  data.zip = document.getElementById('zip').value.trim();
+  data.desc = document.getElementById('desc').value.trim();
+  data.fullname = document.getElementById('fullname').value.trim();
+  data.phone = document.getElementById('phone').value.trim();
+  data.email = document.getElementById('email').value.trim();
+  return data;
+}
+
+const DISPOSABLE_DOMAINS = new Set(['mailinator.com','tempmail.com','10minutemail.com','guerrillamail.com','yopmail.com','trashmail.com']);
+const COMMON_EMAIL_DOMAINS = ['gmail.com','yahoo.com','hotmail.com','outlook.com','icloud.com','aol.com','live.com','msn.com'];
+
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, ()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0] = i;
+  for(let j=0;j<=n;j++) dp[0][j] = j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+// Flags likely typos of major providers (e.g. "yaho.com" -> "yahoo.com").
+// Only flags close matches to well-known domains, to avoid false positives
+// on legitimate smaller/custom domains that just happen to look similar.
+function checkEmailTypo(email){
+  const domain = (email.split('@')[1] || '').toLowerCase();
+  if(COMMON_EMAIL_DOMAINS.includes(domain)) return null;
+  let closest = null, minDist = Infinity;
+  for(const known of COMMON_EMAIL_DOMAINS){
+    const dist = levenshtein(domain, known);
+    if(dist < minDist){ minDist = dist; closest = known; }
+  }
+  if(!closest || minDist === 0) return null;
+  // Short domains need a tighter distance threshold — otherwise plenty of
+  // legitimate 7-char domains (like "abc.com") get flagged as a typo of
+  // "aol.com" purely because they're the same length.
+  const threshold = closest.length <= 7 ? 1 : 2;
+  return minDist <= threshold ? closest : null;
+}
+
+// DEMO-ONLY mock property records — stands in for a real county records
+// lookup (e.g. Travis County Central Appraisal District, traviscad.org)
+// or a paid property data API (ATTOM, Estated, Melissa Data).
+const MOCK_COUNTY_RECORDS = {
+  '733 yarsa blvd|78748': 'John Smith',
+  '210 rainy st|78701': 'Maria Alvarez',
+  '1450 cameron rd|78723': 'David Chen'
+};
+function normalizeAddrKey(street, zip){
+  return (street||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim() + '|' + (zip||'').trim();
+}
+
+// STAND-IN LOGIC ONLY. In production, replace with:
+//  - Address: USPS Address Validation API or Google Address Validation API
+//    (returns a standardized address + deliverability code — confirms the
+//    address actually exists, not just that it's correctly formatted)
+//  - Phone: Twilio Lookup API (confirms the line is currently active and in
+//    service) PLUS an SMS one-time-passcode step (confirms the person
+//    submitting the form actually has that phone in hand right now)
+//  - Email: a mailbox verification service (NeverBounce, ZeroBounce, etc.)
+//    that checks the mailbox actually exists via MX/SMTP, PLUS a
+//    confirmation-link email (confirms the person controls that inbox)
+//  - Ownership: Travis County Central Appraisal District public property
+//    search, or a paid property data API (ATTOM, Estated, Melissa Data),
+//    matched against the submitted name
+function verifyAddress(d){
+  if(!isValidStreetFormat(d.street)){
+    const s = (d.street||'').trim();
+    const hasNumber = /^\d+/.test(s);
+    const reason = !hasNumber
+      ? 'Street address is missing a house number — can\'t be matched against postal records.'
+      : `Street address is missing a recognized street type (St, Ave, Blvd, Dr, Ct, Ln, Rd, etc.) — "${s}" is ambiguous without one and can't be matched against postal records.`;
+    return {status:'fail', reason, note:'Full deliverability confirmation still requires a live USPS or Google Address Validation API call.'};
+  }
+  if(!/^\d{5}$/.test(d.zip)){
+    return {status:'fail', reason:'ZIP code is not a valid 5-digit format.', note:'Full deliverability confirmation still requires a live USPS or Google Address Validation API call.'};
+  }
+  if(!AUSTIN_METRO_ZIPS.has(d.zip)){
+    return {status:'fail', reason:`Address format looks complete, but ZIP ${d.zip} falls outside the ~30 mile Austin service radius.`, note:'Full deliverability confirmation still requires a live USPS or Google Address Validation API call.'};
+  }
+  return {status:'pass', reason:`House number, street name, and ZIP ${d.zip} are all present and ZIP is within the service radius.`, note:'This confirms the address is complete and formatted correctly — it does NOT yet confirm the address exists. A live USPS or Google Address Validation API call is required for that.'};
+}
+
+function verifyPhone(d){
+  const digits = (d.phone||'').replace(/\D/g,'');
+  if(digits.length !== 10){
+    return {status:'fail', reason:`Only ${digits.length} digit(s) captured — a valid US number needs exactly 10.`, note:'Confirming the line is active requires a real-time carrier lookup (e.g. Twilio Lookup).'};
+  }
+  if(/^(\d)\1{9}$/.test(digits)){
+    return {status:'fail', reason:'All 10 digits repeat (e.g. 0000000000) — this pattern is almost always a placeholder or fake entry.', note:'Confirming the line is active requires a real-time carrier lookup (e.g. Twilio Lookup).'};
+  }
+  if(digits[0] === '0' || digits[0] === '1'){
+    return {status:'fail', reason:'Area code can\'t start with 0 or 1 — not a valid US area code.', note:'Confirming the line is active requires a real-time carrier lookup (e.g. Twilio Lookup).'};
+  }
+  return {status:'pass', reason:'10 digits with a valid US area code format.', note:'This only confirms the format looks right — it does NOT confirm the number is real, active, or reachable. Production needs a Twilio Lookup call (confirms the line is in service) plus an SMS one-time-passcode step (confirms the homeowner actually has this phone).'};
+}
+
+function verifyEmail(d){
+  const email = (d.email||'').trim();
+  const formatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if(!formatOk){
+    return {status:'fail', reason:'Doesn\'t match a valid email pattern — missing "@" or a domain.', note:'Confirming the mailbox exists requires a real-time verification service (e.g. NeverBounce, ZeroBounce).'};
+  }
+  const domain = email.split('@')[1].toLowerCase();
+  if(DISPOSABLE_DOMAINS.has(domain)){
+    return {status:'fail', reason:`"${domain}" is a known disposable/temporary email provider — high risk this is a throwaway address.`, note:'Confirming the mailbox exists requires a real-time verification service (e.g. NeverBounce, ZeroBounce).'};
+  }
+  const typoSuggestion = checkEmailTypo(email);
+  if(typoSuggestion){
+    return {status:'fail', reason:`"${domain}" looks like a likely misspelling of "${typoSuggestion}" — probably a typo, not a real domain.`, note:'This is a heuristic typo check against major providers, not a live lookup — it can still miss typos of smaller domains. Production should also run a real-time mailbox check (NeverBounce, ZeroBounce) to confirm either way.'};
+  }
+  return {status:'pass', reason:`Valid format on a real-looking domain (${domain}).`, note:'This only confirms the format looks right and isn\'t a known typo — it does NOT confirm the mailbox exists. Production needs a real-time verification service (NeverBounce, ZeroBounce) to confirm the inbox is live, plus a confirmation-link email to confirm the homeowner controls it.'};
+}
+
+function verifyOwnership(d){
+  const key = normalizeAddrKey(d.street, d.zip);
+  const record = MOCK_COUNTY_RECORDS[key];
+  if(!record){
+    return {status:'unknown', reason:'No property record found for this address in the demo dataset.', note:'In production, this queries Travis County Central Appraisal District (traviscad.org) or a paid property data API (ATTOM, Estated, Melissa Data) for the name of the recorded owner.'};
+  }
+  const submitted = (d.fullname||'').toLowerCase().trim();
+  const recordLastName = record.split(' ').pop().toLowerCase();
+  const submittedLastName = submitted.split(' ').pop();
+  const matches = submitted.includes(recordLastName) || record.toLowerCase().includes(submittedLastName);
+  if(matches){
+    return {status:'pass', reason:`Submitted name matches the recorded owner on file for this address ("${record}").`, note:'Based on the demo dataset — production checks live county tax/appraisal records.'};
+  }
+  return {status:'fail', reason:`County record lists the owner of this address as "${record}", which doesn't match the submitted name "${d.fullname}". This isn't necessarily fraud — could be a recent buyer, spouse, or family trust — but it should go to manual review before this lead is sold.`, note:'Based on the demo dataset — production checks live county tax/appraisal records.'};
+}
+
+function scoreLead(d){
+  let score = 0;
+  const rows = [];
+
+  const urgencyPts = {immediately:30, thisweek:25, '1-2weeks':15, '2plusweeks':5, researching:0};
+  const urgencyLabel = {immediately:'Immediately', thisweek:'This week', '1-2weeks':'Within 1–2 weeks', '2plusweeks':'More than 2 weeks', researching:'Just researching'};
+  const uP = urgencyPts[d.urgency] ?? 0;
+  score += uP;
+  rows.push(['Urgency: ' + (urgencyLabel[d.urgency]||'—'), uP]);
+
+  const paymentPts = {insurance:25, cashfinancing:15, unsure:5};
+  const paymentLabel = {insurance:'Insurance', cashfinancing:'Cash or financing', unsure:'Not sure'};
+  const pP = paymentPts[d.payment] ?? 0;
+  score += pP;
+  rows.push(['Payment: ' + (paymentLabel[d.payment]||'—'), pP]);
+
+  const needPts = {replacement:20, storm:20, repair:10, unsure:5};
+  const needLabel = {replacement:'Complete replacement', storm:'Hail / storm damage', repair:'Repair', unsure:'Not sure'};
+  const nP = needPts[d.need] ?? 0;
+  score += nP;
+  rows.push(['Roof need: ' + (needLabel[d.need]||'—'), nP]);
+
+  const phoneDigits = (d.phone||'').replace(/\D/g,'');
+  const phoneOk = phoneDigits.length === 10;
+  score += phoneOk ? 15 : 0;
+  rows.push(['Phone format valid', phoneOk ? 15 : 0]);
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email||'');
+  score += emailOk ? 10 : 0;
+  rows.push(['Email format valid', emailOk ? 10 : 0]);
+
+  return {score, rows, phoneOk, emailOk, lowUrgency: (d.urgency==='2plusweeks'||d.urgency==='researching')};
+}
+
+function renderInternalPreview(d){
+  const sizeLabel = {
+    lt1000:'Under 1,000 sq ft', '1000-1500':'1,000–1,500 sq ft', '1501-2000':'1,501–2,000 sq ft',
+    '2001-2500':'2,001–2,500 sq ft', '2501-3000':'2,501–3,000 sq ft', gt3000:'Over 3,000 sq ft', unknown:'Size unknown'
+  };
+  const needLabel = {replacement:'Complete replacement', storm:'Hail / storm damage', repair:'Repair', unsure:'Not sure'};
+  const paymentLabel = {insurance:'Insurance', cashfinancing:'Cash or financing', unsure:'Not sure'};
+
+  const addressResult = verifyAddress(d);
+  const phoneResult = verifyPhone(d);
+  const emailResult = verifyEmail(d);
+  const ownershipResult = verifyOwnership(d);
+
+  const badgeText = {pass:'Format OK', fail:'Issue found', unknown:'No record on file'};
+
+  const verifyRows = document.getElementById('verifyRows');
+  verifyRows.innerHTML = '';
+  [
+    ['Address format', addressResult, `${d.street}${d.unit ? ', ' + d.unit : ''}, ${d.city}, TX ${d.zip}`],
+    ['Phone number', phoneResult, d.phone],
+    ['Email address', emailResult, d.email],
+    ['Property ownership', ownershipResult, d.fullname]
+  ].forEach(([label, result, value])=>{
+    const item = document.createElement('div');
+    item.className = 'verify-item';
+    item.innerHTML = `
+      <div class="vhead">
+        <span class="vfield">${label} <span style="font-weight:400;color:var(--ink-soft);">— ${value}</span></span>
+        <span class="tag ${result.status === 'pass' ? 'pass' : (result.status === 'fail' ? 'fail' : 'review')}">${badgeText[result.status]}</span>
+      </div>
+      <div class="vreason">${result.reason}</div>
+      ${result.note ? `<div class="vreason" style="margin-top:5px;font-style:italic;">${result.note}</div>` : ''}
+    `;
+    verifyRows.appendChild(item);
+  });
+
+  // Address existence check — result of the live Google Address Validation
+  // call (or the local fallback if that endpoint wasn't reachable).
+  const av = state.addressVerification;
+  if(av){
+    const item = document.createElement('div');
+    item.className = 'verify-item';
+    const isLive = av.source === 'google';
+
+    let badge, badgeClass, reasonParts = [];
+    if(!isLive){
+      badge = 'Demo mode — not checked live';
+      badgeClass = 'review';
+      reasonParts.push('No live backend reachable from this standalone file, so this used the local format+ZIP fallback (with a small test dataset) instead of a real Google lookup — deploy with the Netlify Function to get a true existence and exact-match check for any address.');
+    } else if(!av.exists){
+      badge = 'Not found by Google';
+      badgeClass = 'fail';
+      reasonParts.push('Google Address Validation API could not confirm this address exists.');
+    } else if(av.exactMatch){
+      badge = 'Exact match';
+      badgeClass = 'pass';
+      reasonParts.push('Google confirmed every part of the address exactly as entered — nothing was corrected, inferred, or left unconfirmed.');
+    } else {
+      badge = 'Exists — not an exact match';
+      badgeClass = 'review';
+      const issues = [];
+      if(av.hasReplacedComponents) issues.push('Google had to correct part of what was entered (e.g. a misspelled street type)');
+      if(av.hasInferredComponents) issues.push('Google had to fill in a part that was missing');
+      if(av.hasUnconfirmedComponents) issues.push('part of the address could not be confirmed at all');
+      reasonParts.push(`The address exists, but it's not an exact match: ${issues.join('; ')}.`);
+    }
+    if(isLive && av.confidence) reasonParts.push(`Match granularity: ${av.confidence}.`);
+    if(isLive && av.standardizedAddress) reasonParts.push(`Google's standardized version: "${av.standardizedAddress}".`);
+    if(isLive && av.distanceMiles !== null) reasonParts.push(`${av.distanceMiles} miles from central Austin.`);
+
+    item.innerHTML = `
+      <div class="vhead">
+        <span class="vfield">Address existence &amp; exact match (Google) <span style="font-weight:400;color:var(--ink-soft);">— live check</span></span>
+        <span class="tag ${badgeClass}">${badge}</span>
+      </div>
+      <div class="vreason">${reasonParts.join(' ')}</div>
+    `;
+    verifyRows.appendChild(item);
+  }
+
+  // Phone — live Twilio Lookup result (or fallback if no backend reachable).
+  const pv = state.phoneVerification;
+  if(pv){
+    const item = document.createElement('div');
+    item.className = 'verify-item';
+    const isLive = pv.source === 'twilio';
+    const badge = !isLive ? 'Demo mode — not checked live' : (pv.valid ? 'Confirmed active line' : 'Not a valid line');
+    const badgeClass = !isLive ? 'review' : (pv.valid ? 'pass' : 'fail');
+    const extra = isLive && pv.lineType ? ` Line type: ${pv.lineType}${pv.carrierName ? ', carrier: ' + pv.carrierName : ''}.` : '';
+    item.innerHTML = `
+      <div class="vhead">
+        <span class="vfield">Phone — live carrier check (Twilio) <span style="font-weight:400;color:var(--ink-soft);">— ${d.phone}</span></span>
+        <span class="tag ${badgeClass}">${badge}</span>
+      </div>
+      <div class="vreason">${pv.reason}${extra}</div>
+    `;
+    verifyRows.appendChild(item);
+  }
+
+  // Email — live ZeroBounce mailbox check (or fallback if no backend reachable).
+  const ev = state.emailVerification;
+  if(ev){
+    const item = document.createElement('div');
+    item.className = 'verify-item';
+    const isLive = ev.source === 'zerobounce';
+    let badge, badgeClass;
+    if(!isLive){
+      badge = 'Demo mode — not checked live';
+      badgeClass = 'review';
+    } else if(ev.status === 'valid'){
+      badge = 'Mailbox confirmed';
+      badgeClass = 'pass';
+    } else if(ev.needsReview){
+      badge = 'Inconclusive — review';
+      badgeClass = 'review';
+    } else {
+      badge = 'Mailbox rejected';
+      badgeClass = 'fail';
+    }
+    item.innerHTML = `
+      <div class="vhead">
+        <span class="vfield">Email — live mailbox check (ZeroBounce) <span style="font-weight:400;color:var(--ink-soft);">— ${d.email}</span></span>
+        <span class="tag ${badgeClass}">${badge}</span>
+      </div>
+      <div class="vreason">${ev.reason}</div>
+    `;
+    verifyRows.appendChild(item);
+  }
+
+  const pingRows = document.getElementById('pingRows');
+  pingRows.innerHTML = '';
+  [
+    ['ZIP code', d.zip],
+    ['Property size', sizeLabel[d.size] || '—'],
+    ['Roof need', needLabel[d.need] || '—'],
+    ['Payment method', paymentLabel[d.payment] || '—']
+  ].forEach(([k,v])=>{
+    const r = document.createElement('div');
+    r.className = 'ping-row';
+    r.innerHTML = `<span>${k}</span><span>${v}</span>`;
+    pingRows.appendChild(r);
+  });
+  const noPii = document.createElement('div');
+  noPii.style.marginTop = '8px';
+  noPii.innerHTML = '<span class="tag pii-hidden">Name, phone, email, exact address — withheld until paid</span>';
+  pingRows.appendChild(noPii);
+
+  const {score, rows, lowUrgency} = scoreLead(d);
+  const scoreRows = document.getElementById('scoreRows');
+  scoreRows.innerHTML = '';
+  rows.forEach(([k,v])=>{
+    const r = document.createElement('div');
+    r.className = 'score-row';
+    r.innerHTML = `<span>${k}</span><span>+${v}</span>`;
+    scoreRows.appendChild(r);
+  });
+  document.getElementById('scoreTotal').textContent = score + ' / 100';
+  const tag = document.getElementById('scoreTag');
+  const hardFail = addressResult.status === 'fail' || phoneResult.status === 'fail' || emailResult.status === 'fail' || ownershipResult.status === 'fail';
+  const ownershipUnknown = ownershipResult.status === 'unknown';
+  const emailInconclusive = ev && ev.needsReview;
+  const demoModeOnly = (pv && pv.source !== 'twilio') || (ev && ev.source !== 'zerobounce') || (av && av.source !== 'google');
+
+  if(hardFail){
+    tag.textContent = 'Manual review needed — verification issue found above';
+    tag.className = 'tag review';
+  } else if(ownershipUnknown){
+    tag.textContent = 'Manual review recommended — ownership unconfirmed (no record match)';
+    tag.className = 'tag review';
+  } else if(emailInconclusive){
+    tag.textContent = 'Manual review recommended — email mailbox check was inconclusive';
+    tag.className = 'tag review';
+  } else if(lowUrgency){
+    tag.textContent = 'Nurture queue — not a paid lead yet';
+    tag.className = 'tag review';
+  } else if(score >= 70 && !demoModeOnly){
+    tag.textContent = 'VERIFIED — ready to ping contractors';
+    tag.className = 'tag verified';
+  } else if(score >= 70 && demoModeOnly){
+    tag.textContent = 'Would be VERIFIED — but live checks are running in demo mode (deploy to confirm for real)';
+    tag.className = 'tag review';
+  } else {
+    tag.textContent = 'Manual review needed';
+    tag.className = 'tag review';
+  }
+}
+
+// Calls the real Netlify Function (which calls Google's Address Validation
+// API server-side). If that endpoint isn't reachable — e.g. this HTML file
+// is opened standalone, outside of a Netlify deploy — falls back to the
+// local format+ZIP heuristic so the demo stays testable on its own.
+async function validateAddressLive(d){
+  try{
+    const res = await fetch('/.netlify/functions/validate-address', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        street: d.street,
+        unit: document.getElementById('noUnit').checked ? '' : d.unit,
+        city: d.city,
+        state: 'TX',
+        zip: d.zip
+      })
+    });
+    if(!res.ok) throw new Error('validate-address function returned ' + res.status);
+    const data = await res.json();
+    return {
+      source: 'google',
+      exists: data.exists,
+      exactMatch: data.exactMatch,
+      zipMismatch: data.zipMismatch,
+      correctedZip: data.correctedZip,
+      hasUnconfirmedComponents: data.hasUnconfirmedComponents,
+      hasInferredComponents: data.hasInferredComponents,
+      hasReplacedComponents: data.hasReplacedComponents,
+      confidence: data.confidence,
+      standardizedAddress: data.standardizedAddress,
+      distanceMiles: data.distanceMiles,
+      withinServiceArea: data.withinServiceArea
+    };
+  } catch(err){
+    const zipOk = /^\d{5}$/.test(d.zip);
+    const normalizedStreet = (d.street||'').toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+    const knownZip = MOCK_KNOWN_ADDRESSES[normalizedStreet];
+    if(knownZip){
+      // Demo-mode stand-in: we recognize this street from the test dataset
+      // and know its real ZIP, so we can simulate the same "wrong ZIP"
+      // catch that live Google validation would perform.
+      const mismatch = knownZip !== d.zip;
+      return {
+        source: 'fallback',
+        exists: true,
+        exactMatch: !mismatch,
+        zipMismatch: mismatch,
+        correctedZip: mismatch ? knownZip : null,
+        confidence: null,
+        standardizedAddress: null,
+        distanceMiles: null,
+        withinServiceArea: AUSTIN_METRO_ZIPS.has(knownZip)
+      };
+    }
+    return {
+      source: 'fallback',
+      exists: isValidStreetFormat(d.street) && zipOk,
+      exactMatch: null,
+      zipMismatch: false,
+      correctedZip: null,
+      confidence: null,
+      standardizedAddress: null,
+      distanceMiles: null,
+      withinServiceArea: zipOk && AUSTIN_METRO_ZIPS.has(d.zip)
+    };
+  }
+}
+
+async function handleAddressCheckStep(){
+  const nextBtn = document.getElementById('nextBtn');
+  const originalText = nextBtn.textContent;
+  nextBtn.disabled = true;
+  nextBtn.textContent = 'Checking address…';
+  document.getElementById('areaStop').style.display = 'none';
+  document.getElementById('addressNotFound').style.display = 'none';
+  document.getElementById('zipMismatch').style.display = 'none';
+
+  const d = collectData();
+  const result = await validateAddressLive(d);
+  state.addressVerification = result;
+
+  nextBtn.disabled = false;
+  nextBtn.textContent = originalText;
+
+  if(!result.exists){
+    document.getElementById('addressNotFound').style.display = 'block';
+    return;
+  }
+  if(result.zipMismatch){
+    document.getElementById('zipMismatch').querySelector('.zip-mismatch-detail').textContent =
+      `You entered ZIP ${d.zip}, but this address is on file with ZIP ${result.correctedZip}.`;
+    document.getElementById('zipMismatch').style.display = 'block';
+    return;
+  }
+  if(!result.withinServiceArea){
+    document.getElementById('areaStop').style.display = 'block';
+    return;
+  }
+
+  state.step++;
+  renderStepChrome();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function validatePhoneLive(d){
+  const digits = d.phone.replace(/\D/g,'');
+  try{
+    const res = await fetch('/.netlify/functions/verify-phone', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({phone: digits})
+    });
+    if(!res.ok) throw new Error('verify-phone function returned ' + res.status);
+    const data = await res.json();
+    return {
+      source:'twilio',
+      valid: !!data.valid,
+      lineType: data.lineType,
+      carrierName: data.carrierName,
+      reason: data.reason,
+      hardFail: !data.valid
+    };
+  } catch(err){
+    const fmt = verifyPhone(d);
+    return {
+      source:'fallback',
+      valid: fmt.status === 'pass',
+      lineType: null,
+      carrierName: null,
+      reason: fmt.status === 'pass'
+        ? 'Format check passed — no live carrier lookup available in demo mode. Deploy with the Netlify Function + Twilio to confirm the line is actually active.'
+        : fmt.reason,
+      hardFail: fmt.status === 'fail'
+    };
+  }
+}
+
+async function validateEmailLive(d){
+  try{
+    const res = await fetch('/.netlify/functions/verify-email', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email: d.email})
+    });
+    if(!res.ok) throw new Error('verify-email function returned ' + res.status);
+    const data = await res.json();
+    const hardFailStatuses = ['invalid','spamtrap','abuse','do_not_mail'];
+    return {
+      source:'zerobounce',
+      status: data.status,
+      subStatus: data.subStatus,
+      reason: data.reason,
+      hardFail: hardFailStatuses.includes(data.status),
+      needsReview: data.status === 'catch-all' || data.status === 'unknown'
+    };
+  } catch(err){
+    const fmt = verifyEmail(d);
+    return {
+      source:'fallback',
+      status: fmt.status === 'pass' ? 'format_ok' : 'format_fail',
+      subStatus: null,
+      reason: fmt.status === 'pass'
+        ? 'Format check passed — no live mailbox check available in demo mode. Deploy with the Netlify Function + ZeroBounce to confirm the mailbox actually exists.'
+        : fmt.reason,
+      hardFail: fmt.status === 'fail',
+      needsReview: false
+    };
+  }
+}
+
+async function handleContactCheckStep(){
+  const nextBtn = document.getElementById('nextBtn');
+  const originalText = nextBtn.textContent;
+  nextBtn.disabled = true;
+  nextBtn.textContent = 'Verifying phone & email…';
+
+  const d = collectData();
+  const [phoneResult, emailResult] = await Promise.all([
+    validatePhoneLive(d),
+    validateEmailLive(d)
+  ]);
+  state.phoneVerification = phoneResult;
+  state.emailVerification = emailResult;
+
+  nextBtn.disabled = false;
+  nextBtn.textContent = originalText;
+
+  let blocked = false;
+  const phoneErrEl = document.querySelector('.error-msg[data-err="phone"]');
+  const emailErrEl = document.querySelector('.error-msg[data-err="email"]');
+
+  if(phoneResult.hardFail){
+    phoneErrEl.textContent = phoneResult.reason;
+    showError('phone', true);
+    blocked = true;
+  }
+  if(emailResult.hardFail){
+    emailErrEl.textContent = emailResult.reason;
+    showError('email', true);
+    blocked = true;
+  }
+  if(blocked) return;
+
+  state.step++;
+  renderStepChrome();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showStopScreen(){
+  document.getElementById('leadForm').style.display = 'none';
+  document.getElementById('navRow').style.display = 'none';
+  document.getElementById('roofline').style.display = 'none';
+  document.getElementById('stepLabel').style.display = 'none';
+  document.getElementById('stopScreen').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function sendLeadNotification(d, score){
+  const ownership = verifyOwnership(d);
+  const av = state.addressVerification;
+  const pv = state.phoneVerification;
+  const ev = state.emailVerification;
+
+  const describeAddress = () => {
+    if(!av) return 'Not checked';
+    if(av.source !== 'google') return 'Demo mode — not checked live';
+    if(!av.exists) return 'Not found by Google';
+    return av.exactMatch ? 'Exact match via Google' : `Exists, not an exact match (corrected ZIP/street details)`;
+  };
+  const describePhone = () => {
+    if(!pv) return 'Not checked';
+    if(pv.source !== 'twilio') return 'Demo mode — not checked live';
+    return pv.valid ? `Active line${pv.lineType ? ' (' + pv.lineType + ')' : ''}` : 'Not a valid, active line';
+  };
+  const describeEmail = () => {
+    if(!ev) return 'Not checked';
+    if(ev.source !== 'zerobounce') return 'Demo mode — not checked live';
+    return ev.reason;
+  };
+
+  const payload = {
+    fullname: d.fullname, phone: d.phone, email: d.email,
+    street: d.street, unit: d.unit, city: d.city, zip: d.zip,
+    need: d.need, size: d.size, desc: d.desc,
+    urgency: d.urgency, payment: d.payment,
+    score,
+    verification: {
+      address: describeAddress(),
+      phone: describePhone(),
+      email: describeEmail(),
+      ownership: ownership.reason
+    }
+  };
+
+  try{
+    const res = await fetch('/.netlify/functions/submit-lead', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const note = document.getElementById('emailNotifyNote');
+    if(note) note.textContent = res.ok ? '✓ Email notification sent to you.' : '⚠ Email notification failed — check Netlify Function logs.';
+  } catch(err){
+    // In demo mode (no backend deployed yet) this always fails; that's
+    // expected until RESEND_API_KEY / LEAD_NOTIFICATION_EMAIL are configured.
+    const note = document.getElementById('emailNotifyNote');
+    if(note) note.textContent = '⚠ No backend reachable — email notification not sent (demo mode).';
+  }
+}
+
+async function goNext(){
+  if(!validateStep()) return;
+
+  if(state.step === 2){
+    await handleAddressCheckStep();
+    return;
+  }
+
+  if(state.step === 5){
+    await handleContactCheckStep();
+    return;
+  }
+
+  if(state.step === state.totalSteps){
+    const d = collectData();
+    const {score} = scoreLead(d);
+    document.getElementById('confirmName').textContent = `Thank you, ${d.fullname.split(' ')[0] || 'there'}.`;
+    document.getElementById('leadForm').style.display = 'none';
+    document.getElementById('navRow').style.display = 'none';
+    document.getElementById('roofline').style.display = 'none';
+    document.getElementById('stepLabel').style.display = 'none';
+    document.getElementById('confirmScreen').style.display = 'block';
+    renderInternalPreview(d);
+    sendLeadNotification(d, score);
+    window.scrollTo({top:0, behavior:'smooth'});
+    return;
+  }
+
+  state.step++;
+  renderStepChrome();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function goBack(){
+  if(state.step === 1) return;
+  state.step--;
+  renderStepChrome();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+document.querySelectorAll('.opt').forEach(opt=>{
+  opt.addEventListener('click', ()=>{
+    const group = opt.closest('.options');
+    group.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+    opt.classList.add('selected');
+  });
+});
+
+document.getElementById('nextBtn').addEventListener('click', goNext);
+document.getElementById('backBtn').addEventListener('click', goBack);
+document.getElementById('internalToggle').addEventListener('click', ()=>{
+  document.getElementById('internalPanel').classList.toggle('open');
+});
+
+renderStepChrome();
+</script>
+</body>
+</html>

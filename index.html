@@ -921,7 +921,6 @@ function renderInternalPreview(d){
   const addressResult = verifyAddress(d);
   const phoneResult = verifyPhone(d);
   const emailResult = verifyEmail(d);
-  const ownershipResult = verifyOwnership(d);
 
   const badgeText = {pass:'Format OK', fail:'Issue found', unknown:'No record on file'};
 
@@ -930,8 +929,7 @@ function renderInternalPreview(d){
   [
     ['Address format', addressResult, `${d.street}${d.unit ? ', ' + d.unit : ''}, ${d.city}, TX ${d.zip}`],
     ['Phone number', phoneResult, d.phone],
-    ['Email address', emailResult, d.email],
-    ['Property ownership', ownershipResult, d.fullname]
+    ['Email address', emailResult, d.email]
   ].forEach(([label, result, value])=>{
     const item = document.createElement('div');
     item.className = 'verify-item';
@@ -946,46 +944,75 @@ function renderInternalPreview(d){
     verifyRows.appendChild(item);
   });
 
-  // Address existence check — result of the live Google Address Validation
-  // call (or the local fallback if that endpoint wasn't reachable).
+  // Address existence — result of the live Travis County (TCAD) parcel
+  // lookup (or the local fallback if that endpoint wasn't reachable).
   const av = state.addressVerification;
   if(av){
     const item = document.createElement('div');
     item.className = 'verify-item';
-    const isLive = av.source === 'google';
+    const isLive = av.source === 'tcad';
 
     let badge, badgeClass, reasonParts = [];
     if(!isLive){
       badge = 'Demo mode — not checked live';
       badgeClass = 'review';
-      reasonParts.push('No live backend reachable from this standalone file, so this used the local format+ZIP fallback (with a small test dataset) instead of a real Google lookup — deploy with the Netlify Function to get a true existence and exact-match check for any address.');
+      reasonParts.push('No live backend reachable from this standalone file, so this used the local format+ZIP fallback (with a small test dataset) instead of a real Travis County (TCAD) lookup.');
     } else if(!av.exists){
-      badge = 'Not found by Google';
+      badge = 'No parcel record found';
       badgeClass = 'fail';
-      reasonParts.push('Google Address Validation API could not confirm this address exists.');
-    } else if(av.exactMatch){
-      badge = 'Exact match';
-      badgeClass = 'pass';
-      reasonParts.push('Google confirmed every part of the address exactly as entered — nothing was corrected, inferred, or left unconfirmed.');
+      reasonParts.push(av.reason || 'No matching parcel found in Travis County records.');
     } else {
-      badge = 'Exists — not an exact match';
-      badgeClass = 'review';
-      const issues = [];
-      if(av.hasReplacedComponents) issues.push('Google had to correct part of what was entered (e.g. a misspelled street type)');
-      if(av.hasInferredComponents) issues.push('Google had to fill in a part that was missing');
-      if(av.hasUnconfirmedComponents) issues.push('part of the address could not be confirmed at all');
-      reasonParts.push(`The address exists, but it's not an exact match: ${issues.join('; ')}.`);
+      badge = 'Confirmed — real parcel on file';
+      badgeClass = 'pass';
+      reasonParts.push(av.reason || 'Found a matching parcel in Travis County\'s public appraisal records.');
+      if(av.matchedAddress) reasonParts.push(`On file as: "${av.matchedAddress}".`);
     }
-    if(isLive && av.confidence) reasonParts.push(`Match granularity: ${av.confidence}.`);
-    if(isLive && av.standardizedAddress) reasonParts.push(`Google's standardized version: "${av.standardizedAddress}".`);
-    if(isLive && av.distanceMiles !== null) reasonParts.push(`${av.distanceMiles} miles from central Austin.`);
+    if(av.zipMismatch) reasonParts.push(`Note: the submitted ZIP (${d.zip}) doesn't match the ZIP on file (${av.correctedZip}).`);
 
     item.innerHTML = `
       <div class="vhead">
-        <span class="vfield">Address existence &amp; exact match (Google) <span style="font-weight:400;color:var(--ink-soft);">— live check</span></span>
+        <span class="vfield">Address existence (Travis County / TCAD) <span style="font-weight:400;color:var(--ink-soft);">— live check</span></span>
         <span class="tag ${badgeClass}">${badge}</span>
       </div>
       <div class="vreason">${reasonParts.join(' ')}</div>
+    `;
+    verifyRows.appendChild(item);
+  }
+
+  // Property ownership — result of the same Travis County (TCAD) lookup,
+  // now including the homeowner's submitted name for comparison.
+  const ov = state.ownershipVerification;
+  {
+    const item = document.createElement('div');
+    item.className = 'verify-item';
+    let badge, badgeClass, reason;
+    if(!ov || ov.source !== 'tcad'){
+      badge = 'Demo mode — not checked live';
+      badgeClass = 'review';
+      reason = 'No live backend reachable from this standalone file — deploy with the Netlify Function to check the real Travis County owner-of-record.';
+    } else if(!ov.exists){
+      badge = 'No record found';
+      badgeClass = 'review';
+      reason = 'No parcel record found for this address, so ownership can\'t be confirmed against county data — route to manual review.';
+    } else if(!ov.ownerName){
+      badge = 'No owner name on file';
+      badgeClass = 'review';
+      reason = 'A parcel record exists, but no owner name field came back from the county data — route to manual review.';
+    } else if(ov.ownerMatch){
+      badge = 'Match found';
+      badgeClass = 'pass';
+      reason = `Submitted name matches the recorded property owner on file ("${ov.ownerName}").`;
+    } else {
+      badge = 'No match';
+      badgeClass = 'fail';
+      reason = `County record lists the owner as "${ov.ownerName}", which doesn't match the submitted name "${d.fullname}". This isn't necessarily fraud — could be a recent buyer, spouse, or family trust — but it should go to manual review before this lead is sold.`;
+    }
+    item.innerHTML = `
+      <div class="vhead">
+        <span class="vfield">Property ownership (Travis County / TCAD) <span style="font-weight:400;color:var(--ink-soft);">— ${d.fullname}</span></span>
+        <span class="tag ${badgeClass}">${badge}</span>
+      </div>
+      <div class="vreason">${reason}</div>
     `;
     verifyRows.appendChild(item);
   }
@@ -1068,8 +1095,8 @@ function renderInternalPreview(d){
   });
   document.getElementById('scoreTotal').textContent = score + ' / 100';
   const tag = document.getElementById('scoreTag');
-  const hardFail = addressResult.status === 'fail' || phoneResult.status === 'fail' || emailResult.status === 'fail' || ownershipResult.status === 'fail';
-  const ownershipUnknown = ownershipResult.status === 'unknown';
+  const hardFail = addressResult.status === 'fail' || phoneResult.status === 'fail' || emailResult.status === 'fail' || (ov && ov.source === 'tcad' && ov.exists && ov.ownerName && ov.ownerMatch === false);
+  const ownershipUnknown = !ov || ov.source !== 'tcad' || !ov.exists || !ov.ownerName;
   const emailInconclusive = ev && ev.needsReview;
   const demoModeOnly = (pv && pv.source !== 'twilio') || (ev && ev.source !== 'zerobounce') || (av && av.source !== 'google');
 
@@ -1103,32 +1130,36 @@ function renderInternalPreview(d){
 // local format+ZIP heuristic so the demo stays testable on its own.
 async function validateAddressLive(d){
   try{
-    const res = await fetch('/.netlify/functions/validate-address', {
+    const res = await fetch('/.netlify/functions/verify-property', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        street: d.street,
-        unit: document.getElementById('noUnit').checked ? '' : d.unit,
-        city: d.city,
-        state: 'TX',
-        zip: d.zip
-      })
+      body: JSON.stringify({ street: d.street })
     });
-    if(!res.ok) throw new Error('validate-address function returned ' + res.status);
+    if(!res.ok) throw new Error('verify-property function returned ' + res.status);
     const data = await res.json();
+
+    if(!data.exists){
+      return {
+        source: 'tcad', exists: false, reason: data.reason,
+        zipMismatch: false, correctedZip: null, withinServiceArea: false
+      };
+    }
+
+    // TCAD only covers Travis County (Austin + immediate area) by
+    // definition, so any matched record already implies it's in the
+    // service area — no separate distance calculation needed.
+    const zipInRecord = (data.matchedAddress || '').match(/\b\d{5}\b/);
+    const zipMismatch = !!(zipInRecord && zipInRecord[0] !== d.zip);
+
     return {
-      source: 'google',
-      exists: data.exists,
-      exactMatch: data.exactMatch,
-      zipMismatch: data.zipMismatch,
-      correctedZip: data.correctedZip,
-      hasUnconfirmedComponents: data.hasUnconfirmedComponents,
-      hasInferredComponents: data.hasInferredComponents,
-      hasReplacedComponents: data.hasReplacedComponents,
-      confidence: data.confidence,
-      standardizedAddress: data.standardizedAddress,
-      distanceMiles: data.distanceMiles,
-      withinServiceArea: data.withinServiceArea
+      source: 'tcad',
+      exists: true,
+      propId: data.propId,
+      matchedAddress: data.matchedAddress,
+      reason: data.reason,
+      zipMismatch,
+      correctedZip: zipMismatch ? zipInRecord[0] : null,
+      withinServiceArea: true
     };
   } catch(err){
     const zipOk = /^\d{5}$/.test(d.zip);
@@ -1137,29 +1168,21 @@ async function validateAddressLive(d){
     if(knownZip){
       // Demo-mode stand-in: we recognize this street from the test dataset
       // and know its real ZIP, so we can simulate the same "wrong ZIP"
-      // catch that live Google validation would perform.
+      // catch that a live TCAD lookup would perform.
       const mismatch = knownZip !== d.zip;
       return {
         source: 'fallback',
         exists: true,
-        exactMatch: !mismatch,
         zipMismatch: mismatch,
         correctedZip: mismatch ? knownZip : null,
-        confidence: null,
-        standardizedAddress: null,
-        distanceMiles: null,
         withinServiceArea: AUSTIN_METRO_ZIPS.has(knownZip)
       };
     }
     return {
       source: 'fallback',
       exists: isValidStreetFormat(d.street) && zipOk,
-      exactMatch: null,
       zipMismatch: false,
       correctedZip: null,
-      confidence: null,
-      standardizedAddress: null,
-      distanceMiles: null,
       withinServiceArea: zipOk && AUSTIN_METRO_ZIPS.has(d.zip)
     };
   }
@@ -1315,16 +1338,15 @@ function showStopScreen(){
 }
 
 async function sendLeadNotification(d, score){
-  const ownership = verifyOwnership(d);
+  const ov = state.ownershipVerification;
   const av = state.addressVerification;
   const pv = state.phoneVerification;
   const ev = state.emailVerification;
 
   const describeAddress = () => {
     if(!av) return 'Not checked';
-    if(av.source !== 'google') return 'Demo mode — not checked live';
-    if(!av.exists) return 'Not found by Google';
-    return av.exactMatch ? 'Exact match via Google' : `Exists, not an exact match (corrected ZIP/street details)`;
+    if(av.source !== 'tcad') return 'Demo mode — not checked live';
+    return av.exists ? `Confirmed — real parcel on file${av.matchedAddress ? ' ("' + av.matchedAddress + '")' : ''}` : 'No parcel record found';
   };
   const describePhone = () => {
     if(!pv) return 'Not checked';
@@ -1335,6 +1357,12 @@ async function sendLeadNotification(d, score){
     if(!ev) return 'Not checked';
     if(ev.source !== 'zerobounce') return 'Demo mode — not checked live';
     return ev.reason;
+  };
+  const describeOwnership = () => {
+    if(!ov || ov.source !== 'tcad') return 'Demo mode — not checked live';
+    if(!ov.exists) return 'No parcel record found';
+    if(!ov.ownerName) return 'No owner name on file';
+    return ov.ownerMatch ? `Match found ("${ov.ownerName}")` : `No match — county lists owner as "${ov.ownerName}"`;
   };
 
   const payload = {
@@ -1347,7 +1375,7 @@ async function sendLeadNotification(d, score){
       address: describeAddress(),
       phone: describePhone(),
       email: describeEmail(),
-      ownership: ownership.reason
+      ownership: describeOwnership()
     }
   };
 
@@ -1364,6 +1392,27 @@ async function sendLeadNotification(d, score){
     // expected until RESEND_API_KEY / LEAD_NOTIFICATION_EMAIL are configured.
     const note = document.getElementById('emailNotifyNote');
     if(note) note.textContent = '⚠ No backend reachable — email notification not sent (demo mode).';
+  }
+}
+
+async function checkOwnershipLive(d){
+  try{
+    const res = await fetch('/.netlify/functions/verify-property', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ street: d.street, fullname: d.fullname })
+    });
+    if(!res.ok) throw new Error('verify-property function returned ' + res.status);
+    const data = await res.json();
+    state.ownershipVerification = {
+      source: 'tcad',
+      exists: data.exists,
+      ownerName: data.ownerName,
+      ownerMatch: data.ownerMatch,
+      reason: data.reason
+    };
+  } catch(err){
+    state.ownershipVerification = { source: 'fallback' };
   }
 }
 
@@ -1389,6 +1438,7 @@ async function goNext(){
     document.getElementById('roofline').style.display = 'none';
     document.getElementById('stepLabel').style.display = 'none';
     document.getElementById('confirmScreen').style.display = 'block';
+    await checkOwnershipLive(d);
     renderInternalPreview(d);
     sendLeadNotification(d, score);
     window.scrollTo({top:0, behavior:'smooth'});

@@ -7,6 +7,9 @@
 //   2. Who the county has on file as the owner of record.
 //
 // Completely free, no API key, no signup, no credit card.
+//
+// TEMPORARY: includes debug info in the response + console logs while we
+// confirm the live field names — remove once confirmed working.
 
 const TCAD_QUERY_URL = 'https://services.arcgis.com/0L95CJ0VTaxqcmED/arcgis/rest/services/EXTERNAL_tcad_parcel/FeatureServer/0/query';
 
@@ -67,19 +70,22 @@ exports.handler = async (event) => {
     const data = await res.json();
 
     if (data.error) {
+      console.log('TCAD query returned an error:', JSON.stringify(data.error));
       return {
         statusCode: 200,
-        body: JSON.stringify({ exists: false, source: 'error', reason: `TCAD query error: ${data.error.message || 'unknown error'}` })
+        body: JSON.stringify({ exists: false, source: 'error', reason: `TCAD query error: ${data.error.message || 'unknown error'}`, debug: { whereClause, error: data.error } })
       };
     }
 
     const features = data.features || [];
     if (features.length === 0) {
+      console.log('TCAD lookup found 0 results. Debug info:', JSON.stringify({ whereClause, url, rawResponse: data }));
       return {
         statusCode: 200,
         body: JSON.stringify({
           exists: false,
-          reason: `No parcel record found in Travis County's database matching "${searchTerm}". This could mean the address doesn't exist, or county records simply haven't caught up with a recent change — route to manual review rather than auto-rejecting.`
+          reason: `No parcel record found in Travis County's database matching "${searchTerm}". This could mean the address doesn't exist, or county records simply haven't caught up with a recent change — route to manual review rather than auto-rejecting.`,
+          debug: { whereClause, rawResponseKeys: Object.keys(data) }
         })
       };
     }

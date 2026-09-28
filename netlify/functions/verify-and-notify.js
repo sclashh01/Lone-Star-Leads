@@ -6,18 +6,33 @@
 // via Resend in the SAME invocation. Property ownership has no public
 // county-records API in any state, so it always routes to manual review.
 //
-// MULTI-STATE / MULTI-MARKET: this function is state-agnostic — it reads
-// `state` from the submitted lead (set by the homeowner's State dropdown
-// in the front-end HTML) instead of assuming Texas.
+// State-agnostic: reads `state` from the submitted lead.
 //
 // Required Netlify environment variables:
-//   GOOGLE_MAPS_API_KEY                       (Google Cloud Console)
-//   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN     (Twilio Console)
-//   ZEROBOUNCE_API_KEY                        (ZeroBounce)
-//   RESEND_API_KEY, RESEND_FROM_ADDRESS,
-//   LEAD_NOTIFICATION_EMAIL                   (Resend)
+//   GOOGLE_MAPS_API_KEY
+//   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
+//   ZEROBOUNCE_API_KEY
+//   RESEND_API_KEY, RESEND_FROM_ADDRESS, LEAD_NOTIFICATION_EMAIL
 
 const GOOGLE_ADDRESS_VALIDATION_URL = 'https://addressvalidation.googleapis.com/v1:validateAddress';
+
+// Normalizes a street line so "733 Yarsa Boulevard" and "733 YARSA BLVD" compare equal,
+// but "733 Yarsa Cir" vs "733 Yarsa Blvd" do NOT.
+const STREET_TOKEN_MAP = {
+  boulevard: 'blvd', avenue: 'ave', street: 'st', drive: 'dr', lane: 'ln', road: 'rd', court: 'ct',
+  circle: 'cir', place: 'pl', trail: 'trl', parkway: 'pkwy', highway: 'hwy', terrace: 'ter',
+  square: 'sq', north: 'n', south: 's', east: 'e', west: 'w',
+  northeast: 'ne', northwest: 'nw', southeast: 'se', southwest: 'sw'
+};
+function normalizeStreet(str) {
+  return String(str || '')
+    .toLowerCase()
+    .replace(/[.,#]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(t => STREET_TOKEN_MAP[t] || t)
+    .join(' ');
+}
 
 async function checkAddress({ street, city, zip, state }) {
   try {
@@ -59,9 +74,30 @@ async function checkAddress({ street, city, zip, state }) {
       };
     }
 
+    const formatted = result.address?.formattedAddress || `${street}, ${city}, ${state} ${zip}`;
+    const matchedLine = usps.standardizedAddress?.firstAddressLine || result.address?.postalAddress?.addressLines?.[0] || '';
+    const matchedZip = String(result.address?.postalAddress?.postalCode || usps.standardizedAddress?.zipCode || '').slice(0, 5);
+
+    // Google may silently "correct" typos (e.g. Cir -> Blvd). The lead is still valid,
+    // but we surface the correction and use the corrected address.
+    const streetCorrected = matchedLine && normalizeStreet(street) !== normalizeStreet(matchedLine);
+    const zipCorrected = zip && matchedZip && String(zip).trim() !== matchedZip;
+    if (streetCorrected || zipCorrected) {
+      const parts = [];
+      if (streetCorrected) parts.push(`street: entered "${street}" -> matched "${matchedLine}"`);
+      if (zipCorrected) parts.push(`ZIP: entered ${zip} -> matched ${matchedZip}`);
+      return {
+        exists: true,
+        corrected: true,
+        matchedAddress: formatted,
+        correctedAddress: formatted,
+        reason: `Auto-corrected by Google (${parts.join('; ')}). Using the corrected address.`
+      };
+    }
+
     return {
       exists: true,
-      matchedAddress: result.address?.formattedAddress || `${street}, ${city}, ${state} ${zip}`,
+      matchedAddress: formatted,
       reason: `Confirmed as a real, deliverable address${dpv ? ' (USPS DPV: ' + dpv + ')' : ''}.`
     };
   } catch (err) {
@@ -131,12 +167,12 @@ async function sendNotification(lead, results) {
     <h3>Contact</h3>
     <p><b>${lead.fullname}</b><br>Phone: ${lead.phone}<br>Email: ${lead.email}</p>
     <h3>Property</h3>
-    <p>${lead.street}${lead.unit ? ', ' + lead.unit : ''}, ${lead.city}, ${lead.state} ${lead.zip}</p>
+    <p>${results.address.corrected ? results.address.correctedAddress + ' <i>(auto-corrected by Google; homeowner typed: ' + lead.street + ', ' + lead.city + ', ' + lead.state + ' ' + lead.zip + ')</i>' : lead.street + (lead.unit ? ', ' + lead.unit : '') + ', ' + lead.city + ', ' + lead.state + ' ' + lead.zip}${results.address.corrected && lead.unit ? '<br>Unit: ' + lead.unit : ''}</p>
     <h3>Request</h3>
     <p>Need: ${lead.need}<br>Size: ${lead.size}<br>Urgency: ${lead.urgency}<br>Payment: ${lead.payment}<br>Description: ${lead.desc || '(none provided)'}</p>
     <h3>Live verification results (single pass)</h3>
     <p>
-      Address (Google): ${results.address.exists ? '✅ ' + results.address.reason : '❌ ' + results.address.reason}<br>
+      Address (Google): ${results.address.exists ? (results.address.corrected ? '⚠️ ' : '✅ ') + results.address.reason : '❌ ' + results.address.reason}${results.address.matchedAddress ? ' [Google matched: ' + results.address.matchedAddress + ']' : ''}<br>
       Phone (Twilio): ${results.phone.valid ? '✅ ' + results.phone.reason : '❌ ' + results.phone.reason}<br>
       Email (ZeroBounce): ${results.email.status === 'valid' ? '✅ ' : (results.email.status === 'catch-all' || results.email.status === 'unknown' ? '⚠️ ' : '❌ ')}${results.email.reason}<br>
       Ownership: ⚠️ Not checked live (no public county records API) — confirm manually before selling this lead.
